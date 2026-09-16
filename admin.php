@@ -1,7 +1,7 @@
 <?php
 require_once 'includes/db.php';
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'superadmin') {
-    header('Location: chat.php');
+    header('Location: chat');
     exit;
 }
 
