@@ -1,0 +1,16 @@
+RewriteEngine On
+Options -Indexes
+
+# 1. Redirigir index.php a la raíz del proyecto (/)
+RewriteCond %{THE_REQUEST} ^[A-Z]{3,9}\ /.*index\.php\ HTTP/
+RewriteRule ^(.*)index\.php$ /$1 [R=301,L]
+
+# 2. Redirigir cualquier archivo .php (excepto la carpeta api) a su versión sin extensión
+RewriteCond %{THE_REQUEST} \s/+(.+?)\.php[\s?] [NC]
+RewriteCond %{REQUEST_URI} !/api/ [NC]
+RewriteRule ^(.*)\.php$ /$1 [R=301,L,NE]
+
+# 3. Procesar rutas amigables internamente hacia los archivos .php
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME}\.php -f
+RewriteRule ^(.*)$ $1.php [L]
