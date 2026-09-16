@@ -99,12 +99,37 @@ while (true) {
         echo "data: " . json_encode($event) . "\n\n";
     }
 
-    if (count($events) > 0) {
+    if (!empty($events)) {
         ob_flush();
         flush();
     }
 
+    // 4. Online Users Tracking
+    // We check which users are online (last_seen > NOW() - 15 SECONDS)
+    $stmt_online = $pdo->prepare("SELECT id FROM users WHERE last_seen > DATE_SUB(NOW(), INTERVAL 15 SECOND)");
+    $stmt_online->execute();
+    $current_online_users = $stmt_online->fetchAll(PDO::FETCH_COLUMN);
+    
+    // Convert to comma separated string to compare easily
+    $current_online_str = implode(',', $current_online_users);
+    
+    if (!isset($last_online_str) || $last_online_str !== $current_online_str) {
+        $last_online_str = $current_online_str;
+        $event = [
+            'type' => 'online_status',
+            'data' => $current_online_users
+        ];
+        echo "data: " . json_encode($event) . "\n\n";
+        ob_flush();
+        flush();
+    }
+
+    // Update my last seen every 5 seconds
     $loop_counter++;
+    if ($loop_counter % 5 == 0) {
+        updateMyStatus($pdo, $user_id);
+    }
+
     sleep(2); // Wait 2 seconds before checking again
 }
 ?>

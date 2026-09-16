@@ -128,8 +128,8 @@ $current_user = $stmt->fetch();
                     <input type="file" id="fileInput" name="file" class="d-none">
                 </div>
                 
-                <div class="flex-grow-1 bg-white rounded-3 mx-2 d-flex align-items-center px-3" style="background-color: #2a3942 !important;">
-                    <input type="text" class="form-control py-2 shadow-none" id="messageInput" name="message" placeholder="Escribe un mensaje" autocomplete="off" style="background-color: transparent !important; color: #e9edef;">
+                <div class="flex-grow-1 rounded-3 mx-2 d-flex align-items-center px-3 shadow-sm" style="background-color: #ffffff !important;">
+                    <input type="text" class="form-control py-2 shadow-none" id="messageInput" name="message" placeholder="Escribe un mensaje" autocomplete="off" style="background-color: transparent !important; color: #111b21 !important;">
                 </div>
                 
                 <button type="submit" class="btn btn-light rounded-circle p-2" id="btnSend" title="Enviar">

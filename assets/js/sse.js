@@ -15,17 +15,44 @@ function initSSE() {
             handleNewMessage(data.data);
         } else if (data.type === 'read_receipts') {
             handleReadReceipts(data.data);
+        } else if (data.type === 'online_status') {
+            updateOnlineStatus(data.data);
         } else if (data.type === 'auth_error') {
             window.location.reload();
         }
     };
 
     eventSource.onerror = function(err) {
-        console.error("SSE Error:", err);
+        // SSE auto-reconnects, no need to clutter console
     };
 }
 
 let knownReadMax = {};
+
+function updateOnlineStatus(onlineUsers) {
+    // Modify chatList in memory
+    let changed = false;
+    if (typeof chatList !== 'undefined') {
+        chatList.forEach(chat => {
+            if (chat.type === 'private' && chat.contact_id) {
+                const isNowOnline = onlineUsers.includes(parseInt(chat.contact_id)) || onlineUsers.includes(String(chat.contact_id));
+                if (chat.is_online !== isNowOnline) {
+                    chat.is_online = isNowOnline;
+                    changed = true;
+                }
+            }
+        });
+        if (changed) renderChatList();
+        
+        // Update active chat header if open
+        if (activeConversationId) {
+            const activeChat = chatList.find(c => c.id == activeConversationId);
+            if (activeChat && activeChat.type === 'private') {
+                document.getElementById('activeChatStatus').textContent = activeChat.is_online ? 'Online' : 'Offline';
+            }
+        }
+    }
+}
 
 function handleReadReceipts(receipts) {
     let changed = false;
