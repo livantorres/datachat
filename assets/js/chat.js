@@ -258,7 +258,7 @@ function renderMessage(msg, container = document.getElementById('messagesBox')) 
     }
 
     if (msg.attachment) {
-        content += renderAttachment(msg.attachment, msg.attachment_type);
+        content += renderAttachment(msg.attachment, msg.attachment_type, msg.id, isMe);
     }
 
     let tickHtml = '';
@@ -272,10 +272,10 @@ function renderMessage(msg, container = document.getElementById('messagesBox')) 
     container.appendChild(div);
 }
 
-function renderAttachment(filename, type) {
+function renderAttachment(filename, type, msgId, isMe) {
     const url = `uploads/attachments/${filename}`;
     if (type === 'image') {
-        return `<a href="${url}" target="_blank"><img src="${url}" class="attachment-preview img-fluid" alt="Adjunto"></a>`;
+        return `<img src="${url}" class="attachment-preview img-fluid" alt="Adjunto" style="cursor:pointer;" onclick="openImageModal('${url}', ${msgId}, ${isMe})">`;
     } else if (type === 'pdf') {
         return `<a href="${url}" target="_blank" class="attachment-file"><i class="bi bi-file-earmark-pdf text-danger"></i> <div>PDF<br><small>Clic para ver/descargar</small></div></a>`;
     } else if (type === 'word') {
@@ -367,22 +367,48 @@ document.getElementById('formCreateGroup').addEventListener('submit', async (e) 
     }
 });
 
+
+
+
 async function deleteMessage(id) {
-    if(confirm('¿Seguro que deseas eliminar este mensaje?')) {
-        const data = await fetchAPI('api/delete_message.php', { method: 'POST', body: JSON.stringify({message_id: id}), headers: {'Content-Type': 'application/json'} });
-        if(data.success) {
-            document.getElementById('msg-'+id)?.remove();
-            showToast('Mensaje eliminado');
-        } else {
-            showToast(data.message, 'error');
+    Swal.fire({
+        title: "¿Eliminar mensaje?",
+        text: "¿Seguro que deseas eliminar este mensaje?",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Sí, eliminar",
+        cancelButtonText: "Cancelar",
+        reverseButtons: true
+    }).then(async (result) => {
+        if (result.isConfirmed) {
+            const data = await fetchAPI("api/delete_message.php", { method: "POST", body: JSON.stringify({message_id: id}), headers: {"Content-Type": "application/json"} });
+            if(data.success) {
+                document.getElementById("msg-"+id)?.remove();
+                showToast("Mensaje eliminado");
+            } else {
+                showToast(data.message, "error");
+            }
         }
-    }
+    });
 }
 
-
-
-
-
-
-
+function openImageModal(url, msgId, isMe) {
+    let html = `<img src="${url}" class="img-fluid w-100 rounded">`;
+    html += `<div class="mt-3 d-flex justify-content-center gap-2">`;
+    html += `<a href="${url}" download target="_blank" class="btn btn-primary"><i class="bi bi-download"></i> Descargar</a>`;
+    if (isMe && msgId) {
+        html += `<button class="btn btn-danger" onclick="Swal.close(); deleteMessage(${msgId})"><i class="bi bi-trash"></i> Eliminar</button>`;
+    }
+    html += `</div>`;
+    
+    Swal.fire({
+        html: html,
+        showConfirmButton: false,
+        showCloseButton: true,
+        width: "auto",
+        customClass: {
+            popup: "p-3"
+        }
+    });
+}
 
