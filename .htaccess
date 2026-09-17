@@ -1,10 +1,9 @@
 RewriteEngine On
 Options -Indexes
 
-# Si es un archivo o directorio existente (incluyendo api, assets, uploads), servirlo directamente
-RewriteCond %{REQUEST_FILENAME} -f [OR]
-RewriteCond %{REQUEST_FILENAME} -d
+# Si es un archivo existente (incluyendo assets, uploads), servirlo directamente
+RewriteCond %{REQUEST_FILENAME} -f
 RewriteRule ^ - [L]
 
-# Todo lo demás pasarlo a core/route.php
-RewriteRule ^(.*)$ core/route.php [QSA,L]
+# Todo lo demás pasarlo a controllers/route.php
+RewriteRule ^(.*)$ controllers/route.php [QSA,L]
