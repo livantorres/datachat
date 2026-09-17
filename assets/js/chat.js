@@ -66,12 +66,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if(!data.success) {
             showToast(data.message, 'error');
         } else {
-            // reload messages to ensure attachment links are correct
-            if(formData.get('file').name) {
-                 document.getElementById('fileInput').value = '';
-                 document.getElementById('messageInput').value = '';
-                 loadMessages(activeConversationId);
-            }
+            document.getElementById('fileInput').value = '';
+            document.getElementById('messageInput').value = '';
+            loadMessages(activeConversationId);
         }
         
     });
@@ -88,11 +85,34 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('fileInput').click();
     });
 
-    // Auto-enviar al seleccionar archivo
-    document.getElementById('fileInput').addEventListener('change', () => {
-        if (document.getElementById('fileInput').files.length > 0) {
-            document.getElementById('messageForm').dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+    // Previsualizar al seleccionar archivo
+    document.getElementById('fileInput').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        let previewHtml = '';
+        if (file.type.startsWith('image/')) {
+            const url = URL.createObjectURL(file);
+            previewHtml = '<img src="' + url + '" class="img-fluid rounded mb-3" style="max-height: 250px; object-fit: contain;">';
+        } else {
+            previewHtml = '<div class="p-4 bg-light rounded mb-3 text-center"><i class="bi bi-file-earmark-check fs-1 text-primary"></i><br><b class="text-break">' + file.name + '</b></div>';
         }
+
+        Swal.fire({
+            title: 'Enviar adjunto',
+            html: previewHtml,
+            showCancelButton: true,
+            confirmButtonText: '<i class="bi bi-send"></i> Enviar',
+            cancelButtonText: 'Cancelar',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('messageForm').dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+            } else {
+                document.getElementById('fileInput').value = '';
+            }
+        });
+    });
     });
 });
 
@@ -210,9 +230,20 @@ async function loadMessages(chatId) {
 function renderMessage(msg, container = document.getElementById('messagesBox')) {
     const isMe = msg.sender_id == CURRENT_USER_ID;
     const div = document.createElement('div');
-    div.className = `message-bubble ${isMe ? 'message-out' : 'message-in'}`;
+    div.id = msg.id ? `msg-${msg.id}` : `msg-tmp-${Date.now()}`;
+    div.className = `message-bubble ${isMe ? 'message-out' : 'message-in'} position-relative`;
     
     let content = '';
+    
+    if (isMe && msg.id) {
+        content += `<div class="dropdown d-inline-block position-absolute" style="top: 2px; right: 5px; z-index: 5;">
+            <i class="bi bi-chevron-down text-muted opacity-50" data-bs-toggle="dropdown" style="cursor:pointer; font-size: 0.75rem;"></i>
+            <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0" style="min-width: 120px;">
+                <li><a class="dropdown-item text-danger py-1" href="#" onclick="deleteMessage(${msg.id}); return false;" style="font-size:0.85rem;"><i class="bi bi-trash"></i> Eliminar</a></li>
+            </ul>
+        </div>`;
+    }
+
     // Show sender name in groups if not me
     if (!isMe && msg.sender_name) {
         content += `<div class="fw-bold text-primary" style="font-size: 0.8rem;">${msg.sender_name}</div>`;
@@ -331,3 +362,17 @@ document.getElementById('formCreateGroup').addEventListener('submit', async (e) 
         if (chat) openChat(chat);
     }
 });
+
+async function deleteMessage(id) {
+    if(confirm('¿Seguro que deseas eliminar este mensaje?')) {
+        const data = await fetchAPI('api/delete_message.php', { method: 'POST', body: JSON.stringify({message_id: id}), headers: {'Content-Type': 'application/json'} });
+        if(data.success) {
+            document.getElementById('msg-'+id)?.remove();
+            showToast('Mensaje eliminado');
+        } else {
+            showToast(data.message, 'error');
+        }
+    }
+}
+
+
