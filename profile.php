@@ -11,32 +11,53 @@ $stmt->execute([$user_id]);
 $current_user = $stmt->fetch();
 $user = $current_user; // For profile specific context
 
+$error = null;
+$success = null;
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = $_POST['password'] ?? '';
+    $email = trim($_POST['email'] ?? '');
+    $phone = trim($_POST['phone'] ?? '');
+    if (empty($phone)) $phone = null;
     
-    // Avatar upload
-    if (isset($_FILES['avatar']) && $_FILES['avatar']['error'] === UPLOAD_ERR_OK) {
-        $ext = pathinfo($_FILES['avatar']['name'], PATHINFO_EXTENSION);
-        $filename = md5($user_id . time()) . '.' . $ext;
-        
-        $upload_dir = 'uploads/avatars/';
-        if (!is_dir($upload_dir)) {
-            mkdir($upload_dir, 0755, true);
+    try {
+        if (!empty($email)) {
+            $pdo->prepare("UPDATE users SET email = ?, phone = ? WHERE id = ?")->execute([$email, $phone, $user_id]);
+            $user->email = $email;
+            $user->phone = $phone;
+            $current_user->email = $email;
         }
         
-        if (move_uploaded_file($_FILES['avatar']['tmp_name'], $upload_dir . $filename)) {
-            $pdo->prepare("UPDATE users SET avatar = ? WHERE id = ?")->execute([$filename, $user_id]);
-            $user->avatar = $filename;
-            $current_user->avatar = $filename; // Update session context var too
+        // Avatar upload
+        if (isset($_FILES['avatar']) && $_FILES['avatar']['error'] === UPLOAD_ERR_OK) {
+            $ext = pathinfo($_FILES['avatar']['name'], PATHINFO_EXTENSION);
+            $filename = md5($user_id . time()) . '.' . $ext;
+            
+            $upload_dir = 'uploads/avatars/';
+            if (!is_dir($upload_dir)) {
+                mkdir($upload_dir, 0755, true);
+            }
+            
+            if (move_uploaded_file($_FILES['avatar']['tmp_name'], $upload_dir . $filename)) {
+                $pdo->prepare("UPDATE users SET avatar = ? WHERE id = ?")->execute([$filename, $user_id]);
+                $user->avatar = $filename;
+                $current_user->avatar = $filename; // Update session context var too
+            }
         }
-    }
 
-    if (!empty($password)) {
-        $hash = password_hash($password, PASSWORD_DEFAULT);
-        $pdo->prepare("UPDATE users SET password = ? WHERE id = ?")->execute([$hash, $user_id]);
+        if (!empty($password)) {
+            $hash = password_hash($password, PASSWORD_DEFAULT);
+            $pdo->prepare("UPDATE users SET password = ? WHERE id = ?")->execute([$hash, $user_id]);
+        }
+        
+        $success = "Perfil actualizado correctamente";
+    } catch(PDOException $e) {
+        if ($e->errorInfo[1] == 1062) {
+            $error = "El correo o teléfono ya están en uso por otra cuenta.";
+        } else {
+            $error = "Error al actualizar perfil.";
+        }
     }
-    
-    $success = "Perfil actualizado correctamente";
 }
 ?>
 <!DOCTYPE html>
@@ -151,8 +172,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <h5 class="m-0"><i class="bi bi-person-vcard me-2"></i> Mis Datos</h5>
                     </div>
                     <div class="card-body">
-                        <?php if(isset($success)): ?>
+                        <?php if($success): ?>
                             <div class="alert alert-success"><i class="bi bi-check-circle me-1"></i> <?= $success ?></div>
+                        <?php endif; ?>
+                        <?php if($error): ?>
+                            <div class="alert alert-danger"><i class="bi bi-exclamation-triangle me-1"></i> <?= $error ?></div>
                         <?php endif; ?>
                         <form method="POST" enctype="multipart/form-data">
                             <div class="text-center mb-4">
@@ -165,6 +189,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <div class="mb-3">
                                 <label class="form-label text-muted">Nombre</label>
                                 <input type="text" class="form-control" value="<?= htmlspecialchars($user->name) ?>" disabled style="background-color: var(--wa-bg-color) !important; opacity: 0.8;">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label text-muted">Documento</label>
+                                <input type="text" class="form-control" value="<?= htmlspecialchars($user->document_number) ?>" disabled style="background-color: var(--wa-bg-color) !important; opacity: 0.8;">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label text-muted">Email</label>
+                                <input type="email" class="form-control" name="email" value="<?= htmlspecialchars($user->email) ?>" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label text-muted">Teléfono</label>
+                                <input type="text" class="form-control" name="phone" value="<?= htmlspecialchars($user->phone ?? '') ?>">
                             </div>
                             <div class="mb-4">
                                 <label class="form-label text-muted">Nueva Contraseña <small>(dejar en blanco para no cambiar)</small></label>

@@ -2,7 +2,11 @@ let activeConversationId = null;
 let chatList = [];
 
 document.addEventListener('DOMContentLoaded', () => {
-    loadChats();
+    loadChats().then(() => {
+        if (typeof OPEN_CHAT_USER !== 'undefined' && OPEN_CHAT_USER !== null) {
+            startPrivateChat(OPEN_CHAT_USER);
+        }
+    });
 
     // Responsive back button (or ESC equivalent)
     const closeChat = () => {

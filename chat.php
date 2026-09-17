@@ -183,7 +183,11 @@ $current_user = $stmt->fetch();
 <audio id="notificationSound" src="assets/sounds/notification.mp3" preload="auto"></audio>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.12/dist/sweetalert2.all.min.js"></script>
-<script>const CURRENT_USER_ID = <?= $user_id ?>; const APP_NAME = "<?= htmlspecialchars($inst_data->app_name) ?>";</script>
+<script>
+    const CURRENT_USER_ID = <?= $user_id ?>; 
+    const APP_NAME = "<?= htmlspecialchars($inst_data->app_name) ?>";
+    const OPEN_CHAT_USER = <?= isset($_GET['chat_user']) ? intval($_GET['chat_user']) : 'null' ?>;
+</script>
 <script src="assets/js/app.js"></script>
 <script src="assets/js/chat.js"></script>
 <script src="assets/js/sse.js"></script>

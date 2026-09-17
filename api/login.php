@@ -4,19 +4,24 @@ require_once '../includes/db.php';
 header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $document_number = $_POST['document_number'] ?? '';
+    $login_id = $_POST['login_id'] ?? '';
     $password = $_POST['password'] ?? '';
 
-    if (empty($document_number) || empty($password)) {
+    if (empty($login_id) || empty($password)) {
         echo json_encode(['success' => false, 'message' => 'Llene todos los campos']);
         exit;
     }
 
-    $stmt = $pdo->prepare("SELECT * FROM users WHERE document_number = ?");
-    $stmt->execute([$document_number]);
+    $stmt = $pdo->prepare("SELECT * FROM users WHERE document_number = ? OR email = ? OR phone = ?");
+    $stmt->execute([$login_id, $login_id, $login_id]);
     $user = $stmt->fetch();
 
     if ($user && password_verify($password, $user->password)) {
+        if ($user->is_active == 0 && $user->role !== 'superadmin') {
+            echo json_encode(['success' => false, 'message' => 'Tu cuenta está inactiva. Espera a que un administrador la habilite.']);
+            exit;
+        }
+
         // Set sessions
         $_SESSION['user_id'] = $user->id;
         $_SESSION['role'] = $user->role;
@@ -28,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         echo json_encode(['success' => true, 'message' => 'Login exitoso']);
     } else {
-        echo json_encode(['success' => false, 'message' => 'Documento o contraseña incorrectos']);
+        echo json_encode(['success' => false, 'message' => 'Datos incorrectos']);
     }
 } else {
     echo json_encode(['success' => false, 'message' => 'Método no permitido']);

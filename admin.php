@@ -43,15 +43,18 @@ if (isset($_POST['action'])) {
     if ($_POST['action'] === 'create_user') {
         $name = $_POST['name'];
         $doc = $_POST['document_number'];
+        $phone = $_POST['phone'];
+        if(empty($phone)) $phone = null;
         $email = $_POST['email'];
         $pass = password_hash($doc, PASSWORD_DEFAULT); // Default pass is document
         
         try {
-            $pdo->prepare("INSERT INTO users (name, document_number, email, password) VALUES (?, ?, ?, ?)")
-                ->execute([$name, $doc, $email, $pass]);
+            // Se crean activos por defecto desde el panel admin
+            $pdo->prepare("INSERT INTO users (name, document_number, phone, email, password, is_active) VALUES (?, ?, ?, ?, ?, 1)")
+                ->execute([$name, $doc, $phone, $email, $pass]);
             $msg_user = "Usuario creado exitosamente. La contraseña es su número de documento.";
         } catch(PDOException $e) {
-            $err_user = "Error al crear usuario (quizás el documento o email ya existe).";
+            $err_user = "Error al crear usuario (quizás el documento, email o teléfono ya existe).";
         }
     }
     
@@ -61,6 +64,13 @@ if (isset($_POST['action'])) {
         $pass = password_hash($doc, PASSWORD_DEFAULT);
         $pdo->prepare("UPDATE users SET password = ? WHERE id = ?")->execute([$pass, $uid]);
         $msg_user = "Contraseña reiniciada al número de documento.";
+    }
+
+    if ($_POST['action'] === 'toggle_active') {
+        $uid = $_POST['user_id'];
+        $new_status = $_POST['new_status'];
+        $pdo->prepare("UPDATE users SET is_active = ? WHERE id = ?")->execute([$new_status, $uid]);
+        $msg_user = "Estado del usuario actualizado.";
     }
 }
 
@@ -206,21 +216,25 @@ $users = $pdo->query("SELECT * FROM users ORDER BY name ASC")->fetchAll();
             <!-- Usuarios -->
             <div class="col-md-8 mb-4">
                 <div class="card shadow-sm h-100">
-                    <div class="card-header border-bottom d-flex justify-content-between align-items-center">
+                    <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="m-0"><i class="bi bi-people me-2"></i> Gestión de Usuarios</h5>
-                        <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#modalCreateUser"><i class="bi bi-plus-lg"></i> Nuevo Usuario</button>
+                        <button class="btn btn-sm" style="background-color: #ffffff; color: #118a66; font-weight: 500;" data-bs-toggle="modal" data-bs-target="#modalCreateUser"><i class="bi bi-plus-lg"></i> Nuevo Usuario</button>
                     </div>
-                    <div class="card-body overflow-auto" style="max-height: 600px;">
+                    <div class="card-body overflow-hidden d-flex flex-column" style="max-height: 600px;">
                         <?php if(isset($msg_user)) echo "<div class='alert alert-success'>$msg_user</div>"; ?>
                         <?php if(isset($err_user)) echo "<div class='alert alert-danger'>$err_user</div>"; ?>
                         
-                        <div class="table-responsive">
-                            <table class="table table-hover align-middle">
+                        <div class="mb-3">
+                            <input type="text" id="searchUserAdmin" class="form-control" placeholder="Buscar usuario por nombre, documento o correo...">
+                        </div>
+
+                        <div class="table-responsive flex-grow-1 overflow-auto">
+                            <table class="table table-hover align-middle" id="usersTableAdmin">
                                 <thead>
                                     <tr>
                                         <th>Usuario</th>
                                         <th>Documento</th>
-                                        <th>Rol</th>
+                                        <th>Rol/Estado</th>
                                         <th>Última Conexión</th>
                                         <th>Acciones</th>
                                     </tr>
@@ -232,14 +246,20 @@ $users = $pdo->query("SELECT * FROM users ORDER BY name ASC")->fetchAll();
                                             <div class="d-flex align-items-center">
                                                 <img src="uploads/avatars/<?= $u->avatar ?>" class="rounded-circle me-2 border border-secondary" width="35" height="35" style="cursor:pointer; object-fit: cover;" onclick="viewImage(this.src, 'avatar', <?= $u->id ?>)" onerror="this.src='https://ui-avatars.com/api/?name=<?= urlencode($u->name) ?>'">
                                                 <div>
-                                                    <div class="fw-bold"><?= htmlspecialchars($u->name) ?></div>
-                                                    <small class="text-muted"><?= htmlspecialchars($u->email) ?></small>
+                                                    <div class="fw-bold user-name-col"><?= htmlspecialchars($u->name) ?></div>
+                                                    <small class="text-muted user-email-col"><?= htmlspecialchars($u->email) ?></small>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td><?= htmlspecialchars($u->document_number) ?></td>
+                                        <td class="user-doc-col">
+                                            <?= htmlspecialchars($u->document_number) ?><br>
+                                            <small class="text-muted"><i class="bi bi-telephone"></i> <?= htmlspecialchars($u->phone ?: 'N/A') ?></small>
+                                        </td>
                                         <td>
                                             <span class="badge <?= $u->role == 'superadmin' ? 'bg-danger' : 'bg-secondary' ?>"><?= ucfirst($u->role) ?></span>
+                                            <?php if($u->is_active == 0): ?>
+                                                <span class="badge bg-warning text-dark"><i class="bi bi-person-dash"></i> Inactivo</span>
+                                            <?php endif; ?>
                                         </td>
                                         <td>
                                             <small class="text-muted d-block"><?= $u->last_seen ? date('d/m/Y H:i', strtotime($u->last_seen)) : 'Nunca' ?></small>
@@ -248,12 +268,28 @@ $users = $pdo->query("SELECT * FROM users ORDER BY name ASC")->fetchAll();
                                             <?php endif; ?>
                                         </td>
                                         <td>
-                                            <form method="POST" class="d-inline" onsubmit="return confirm('¿Reiniciar contraseña al documento?');">
-                                                <input type="hidden" name="action" value="reset_pass">
-                                                <input type="hidden" name="user_id" value="<?= $u->id ?>">
-                                                <input type="hidden" name="user_doc" value="<?= htmlspecialchars($u->document_number) ?>">
-                                                <button type="submit" class="btn btn-sm btn-outline-warning" title="Reiniciar Contraseña"><i class="bi bi-key"></i></button>
-                                            </form>
+                                            <div class="d-flex flex-wrap gap-1">
+                                                <a href="chat?chat_user=<?= $u->id ?>" class="btn btn-sm btn-outline-primary" title="Chatear"><i class="bi bi-chat-dots"></i></a>
+                                                
+                                                <form method="POST" class="d-inline" onsubmit="return confirm('¿Reiniciar contraseña al documento?');">
+                                                    <input type="hidden" name="action" value="reset_pass">
+                                                    <input type="hidden" name="user_id" value="<?= $u->id ?>">
+                                                    <input type="hidden" name="user_doc" value="<?= htmlspecialchars($u->document_number) ?>">
+                                                    <button type="submit" class="btn btn-sm btn-outline-warning" title="Reiniciar Contraseña"><i class="bi bi-key"></i></button>
+                                                </form>
+
+                                                <form method="POST" class="d-inline">
+                                                    <input type="hidden" name="action" value="toggle_active">
+                                                    <input type="hidden" name="user_id" value="<?= $u->id ?>">
+                                                    <?php if($u->is_active == 1): ?>
+                                                        <input type="hidden" name="new_status" value="0">
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Desactivar Cuenta"><i class="bi bi-x-circle"></i></button>
+                                                    <?php else: ?>
+                                                        <input type="hidden" name="new_status" value="1">
+                                                        <button type="submit" class="btn btn-sm btn-outline-success" title="Activar Cuenta"><i class="bi bi-check-circle"></i></button>
+                                                    <?php endif; ?>
+                                                </form>
+                                            </div>
                                         </td>
                                     </tr>
                                     <?php endforeach; ?>
@@ -283,8 +319,12 @@ $users = $pdo->query("SELECT * FROM users ORDER BY name ASC")->fetchAll();
                 <input type="text" name="name" class="form-control" required>
             </div>
             <div class="mb-3">
-                <label class="form-label text-muted">N° Documento (Será su contraseña inicial)</label>
+                <label class="form-label text-muted">N° Documento (Contraseña inicial)</label>
                 <input type="text" name="document_number" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label text-muted">Teléfono</label>
+                <input type="text" name="phone" class="form-control">
             </div>
             <div class="mb-3">
                 <label class="form-label text-muted">Email</label>
@@ -347,6 +387,27 @@ $users = $pdo->query("SELECT * FROM users ORDER BY name ASC")->fetchAll();
                     }
                 });
             }
+        });
+    }
+
+    // Buscador de usuarios
+    const searchInput = document.getElementById('searchUserAdmin');
+    if(searchInput) {
+        searchInput.addEventListener('input', function() {
+            const term = this.value.toLowerCase();
+            const rows = document.querySelectorAll('#usersTableAdmin tbody tr');
+            
+            rows.forEach(row => {
+                const name = row.querySelector('.user-name-col')?.textContent.toLowerCase() || '';
+                const email = row.querySelector('.user-email-col')?.textContent.toLowerCase() || '';
+                const doc = row.querySelector('.user-doc-col')?.textContent.toLowerCase() || '';
+                
+                if(name.includes(term) || email.includes(term) || doc.includes(term)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
         });
     }
 </script>
