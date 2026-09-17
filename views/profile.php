@@ -18,13 +18,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = $_POST['password'] ?? '';
     $email = trim($_POST['email'] ?? '');
     $phone = trim($_POST['phone'] ?? '');
+    $document_number = trim($_POST['document_number'] ?? '');
     if (empty($phone)) $phone = null;
     
     try {
-        if (!empty($email)) {
-            $pdo->prepare("UPDATE users SET email = ?, phone = ? WHERE id = ?")->execute([$email, $phone, $user_id]);
+        if (!empty($email) && !empty($document_number)) {
+            $pdo->prepare("UPDATE users SET email = ?, phone = ?, document_number = ? WHERE id = ?")->execute([$email, $phone, $document_number, $user_id]);
             $user->email = $email;
             $user->phone = $phone;
+            $user->document_number = $document_number;
             $current_user->email = $email;
         }
         
@@ -52,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $success = "Perfil actualizado correctamente";
     } catch(PDOException $e) {
         if ($e->errorInfo[1] == 1062) {
-            $error = "El correo o teléfono ya están en uso por otra cuenta.";
+            $error = "El documento, correo o teléfono ya están en uso por otra cuenta.";
         } else {
             $error = "Error al actualizar perfil.";
         }
@@ -191,7 +193,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             </div>
                             <div class="mb-3">
                                 <label class="form-label text-muted">Documento</label>
-                                <input type="text" class="form-control" value="<?= htmlspecialchars($user->document_number) ?>" disabled style="background-color: var(--wa-bg-color) !important; opacity: 0.8;">
+                                <input type="text" name="document_number" class="form-control" value="<?= htmlspecialchars($user->document_number) ?>" required>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label text-muted">Email</label>

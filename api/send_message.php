@@ -35,7 +35,10 @@ if (isset($_FILES['file']) && $_FILES['file']['error'] === UPLOAD_ERR_OK) {
     
     if (in_array($fileExtension, $allowedfileExtensions)) {
         $newFileName = md5(time() . $fileName) . '.' . $fileExtension;
-        $uploadFileDir = '../uploads/attachments/';
+        $uploadFileDir = __DIR__ . '/../uploads/attachments/';
+        if (!is_dir($uploadFileDir)) {
+            mkdir($uploadFileDir, 0777, true);
+        }
         $dest_path = $uploadFileDir . $newFileName;
         
         if (move_uploaded_file($fileTmpPath, $dest_path)) {

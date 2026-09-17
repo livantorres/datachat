@@ -180,7 +180,14 @@ async function openChat(chat) {
     });
 
     renderChatList(); // Update active class
+    // Cargar mensajes
     await loadMessages(chat.id);
+    
+    // Enfocar automáticamente el input del chat
+    const msgInput = document.getElementById('messageInput');
+    if (msgInput) {
+        msgInput.focus();
+    }
 }
 
 async function loadMessages(chatId) {
