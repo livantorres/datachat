@@ -3,10 +3,12 @@ uploads/attachments/*
 uploads/avatars/*
 uploads/logos/*
 
-# Mantener las carpetas vacías en el repositorio
+# Mantener las carpetas vacías y archivos por defecto en el repositorio
 !uploads/attachments/.gitkeep
 !uploads/avatars/.gitkeep
 !uploads/logos/.gitkeep
+!uploads/avatars/default.png
+!uploads/avatars/group.png
 
 # IDEs y sistemas operativos
 .vscode/

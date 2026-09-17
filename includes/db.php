@@ -5,8 +5,10 @@ session_start();
 
 $db_host = 'localhost';
 $db_name = 'datasis_datachat';
-$db_user = 'root'; // Change if necessary on production
-$db_pass = '';     // Change if necessary on production
+//$db_user = 'root'; // Change if necessary on production
+$db_user = 'datachat_user'; // Change if necessary on production
+$db_pass = 'datchat_user2026*/';     // Change if necessary on production
+// $db_pass = '';     // Change if necessary on production
 
 try {
     $pdo = new PDO("mysql:host=$db_host;dbname=$db_name;charset=utf8mb4", $db_user, $db_pass);
