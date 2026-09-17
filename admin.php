@@ -5,6 +5,11 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'superadmin') {
     exit;
 }
 
+$user_id = $_SESSION['user_id'];
+$stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
+$stmt->execute([$user_id]);
+$current_user = $stmt->fetch();
+
 // Handle institutional data update
 if (isset($_POST['update_inst'])) {
     $app_name = $_POST['app_name'];
@@ -16,7 +21,13 @@ if (isset($_POST['update_inst'])) {
     if (isset($_FILES['logo']) && $_FILES['logo']['error'] === UPLOAD_ERR_OK) {
         $ext = pathinfo($_FILES['logo']['name'], PATHINFO_EXTENSION);
         $filename = 'logo_' . time() . '.' . $ext;
-        if (move_uploaded_file($_FILES['logo']['tmp_name'], "uploads/logos/$filename")) {
+        
+        $upload_dir = 'uploads/logos/';
+        if (!is_dir($upload_dir)) {
+            mkdir($upload_dir, 0755, true);
+        }
+        
+        if (move_uploaded_file($_FILES['logo']['tmp_name'], $upload_dir . $filename)) {
             $logo_query = ", logo = ?";
             $params[] = $filename;
         }
@@ -59,94 +70,197 @@ $users = $pdo->query("SELECT * FROM users ORDER BY name ASC")->fetchAll();
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Administración - <?= htmlspecialchars($inst_data->app_name) ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.12/dist/sweetalert2.min.css" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/style.css">
     <script src="assets/js/theme.js"></script>
+    <style>
+        /* Admin Layout Styles */
+        body { overflow-y: auto; }
+        .admin-sidebar {
+            width: 250px;
+            background-color: var(--wa-panel-color);
+            border-right: 1px solid var(--wa-border-color);
+            min-height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 100;
+        }
+        .admin-content {
+            margin-left: 250px;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .admin-header {
+            background-color: var(--wa-bg-color);
+            border-bottom: 1px solid var(--wa-border-color);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .nav-link { color: var(--wa-text-main); }
+        .nav-link:hover, .nav-link.active {
+            background-color: var(--wa-hover-color);
+            color: var(--wa-primary);
+            border-radius: 5px;
+        }
+        @media (max-width: 768px) {
+            .admin-sidebar { transform: translateX(-100%); transition: transform 0.3s ease; }
+            .admin-sidebar.sidebar-open { transform: translateX(0); }
+            .admin-content { margin-left: 0; }
+        }
+    </style>
 </head>
-<body class="bg-light">
+<body>
 
-<div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Panel de Administración</h2>
-        <a href="chat.php" class="btn btn-secondary">Volver al Chat</a>
+<!-- Sidebar -->
+<div class="admin-sidebar d-flex flex-column p-3">
+    <a href="chat" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-decoration-none" style="color: var(--wa-text-main);">
+        <?php if($inst_data->logo): ?>
+            <img src="uploads/logos/<?= htmlspecialchars($inst_data->logo) ?>" alt="Logo" width="30" class="me-2">
+        <?php else: ?>
+            <i class="bi bi-gear-fill fs-4 me-2 text-primary"></i>
+        <?php endif; ?>
+        <span class="fs-5 fw-bold"><?= htmlspecialchars($inst_data->app_name) ?></span>
+    </a>
+    <hr style="border-color: var(--wa-border-color);">
+    <ul class="nav nav-pills flex-column mb-auto">
+        <li class="nav-item">
+            <a href="admin" class="nav-link active">
+                <i class="bi bi-speedometer2 me-2"></i> Dashboard
+            </a>
+        </li>
+        <li>
+            <a href="profile" class="nav-link">
+                <i class="bi bi-person-circle me-2"></i> Mi Perfil
+            </a>
+        </li>
+        <li>
+            <a href="chat" class="nav-link">
+                <i class="bi bi-chat-dots me-2"></i> Volver al Chat
+            </a>
+        </li>
+    </ul>
+    <hr style="border-color: var(--wa-border-color);">
+    <div class="dropdown">
+        <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle" style="color: var(--wa-text-main);" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
+            <img src="uploads/avatars/<?= htmlspecialchars($current_user->avatar) ?>" alt="" width="32" height="32" class="rounded-circle me-2" onerror="this.src='https://ui-avatars.com/api/?name=<?= urlencode($current_user->name) ?>'">
+            <strong><?= htmlspecialchars($current_user->name) ?></strong>
+        </a>
+        <ul class="dropdown-menu text-small shadow" aria-labelledby="dropdownUser1">
+            <li><a class="dropdown-item" href="#" onclick="setTheme('light'); return false;"><i class="bi bi-sun me-2"></i>Claro</a></li>
+            <li><a class="dropdown-item" href="#" onclick="setTheme('dark'); return false;"><i class="bi bi-moon me-2"></i>Oscuro</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item text-danger" href="api/logout.php">Cerrar sesión</a></li>
+        </ul>
     </div>
+</div>
 
-    <div class="row">
-        <!-- Institucional -->
-        <div class="col-md-4 mb-4">
-            <div class="card shadow-sm">
-                <div class="card-header bg-dark text-white">Datos Institucionales</div>
-                <div class="card-body">
-                    <?php if(isset($msg_inst)) echo "<div class='alert alert-success'>$msg_inst</div>"; ?>
-                    <form method="POST" enctype="multipart/form-data">
-                        <input type="hidden" name="update_inst" value="1">
-                        <div class="mb-3">
-                            <label>Nombre de la App</label>
-                            <input type="text" name="app_name" class="form-control" value="<?= htmlspecialchars($inst_data->app_name) ?>" required>
-                        </div>
-                        <div class="mb-3">
-                            <label>Nombre de la Empresa</label>
-                            <input type="text" name="company_name" class="form-control" value="<?= htmlspecialchars($inst_data->company_name) ?>" required>
-                        </div>
-                        <div class="mb-3">
-                            <label>Logo actual</label><br>
-                            <?php if($inst_data->logo): ?>
-                                <img src="uploads/logos/<?= $inst_data->logo ?>" height="50" class="mb-2">
-                            <?php endif; ?>
-                            <input type="file" name="logo" class="form-control" accept="image/*">
-                        </div>
-                        <button type="submit" class="btn btn-primary w-100">Actualizar Datos</button>
-                    </form>
+<!-- Main Content -->
+<div class="admin-content p-0">
+    <div class="admin-header">
+        <h4 class="m-0" style="color: var(--wa-text-main);">Administración</h4>
+        <button class="btn btn-primary d-md-none" id="sidebarToggle"><i class="bi bi-list"></i></button>
+    </div>
+    
+    <div class="container-fluid p-4">
+        <div class="row">
+            <!-- Institucional -->
+            <div class="col-md-4 mb-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header border-bottom">
+                        <h5 class="m-0"><i class="bi bi-building me-2"></i> Datos Institucionales</h5>
+                    </div>
+                    <div class="card-body">
+                        <?php if(isset($msg_inst)) echo "<div class='alert alert-success'>$msg_inst</div>"; ?>
+                        <form method="POST" enctype="multipart/form-data">
+                            <input type="hidden" name="update_inst" value="1">
+                            <div class="mb-3">
+                                <label class="form-label text-muted">Nombre de la App</label>
+                                <input type="text" name="app_name" class="form-control" value="<?= htmlspecialchars($inst_data->app_name) ?>" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label text-muted">Nombre de la Empresa</label>
+                                <input type="text" name="company_name" class="form-control" value="<?= htmlspecialchars($inst_data->company_name) ?>" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label text-muted">Logo actual</label><br>
+                                <?php if($inst_data->logo): ?>
+                                    <div class="bg-light p-2 rounded mb-2 d-inline-block border">
+                                        <img src="uploads/logos/<?= $inst_data->logo ?>" height="40" style="cursor:pointer;" onclick="viewImage(this.src, 'logo')">
+                                    </div>
+                                <?php endif; ?>
+                                <input type="file" name="logo" class="form-control" accept="image/*">
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">Actualizar Datos</button>
+                        </form>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Usuarios -->
-        <div class="col-md-8 mb-4">
-            <div class="card shadow-sm">
-                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                    <span class="m-0">Gestión de Usuarios</span>
-                    <button class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#modalCreateUser">Nuevo Usuario</button>
-                </div>
-                <div class="card-body overflow-auto" style="max-height: 500px;">
-                    <?php if(isset($msg_user)) echo "<div class='alert alert-success'>$msg_user</div>"; ?>
-                    <?php if(isset($err_user)) echo "<div class='alert alert-danger'>$err_user</div>"; ?>
-                    
-                    <table class="table table-hover align-middle">
-                        <thead>
-                            <tr>
-                                <th>Usuario</th>
-                                <th>Documento</th>
-                                <th>Rol</th>
-                                <th>Última Conexión</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach($users as $u): ?>
-                            <tr>
-                                <td>
-                                    <img src="uploads/avatars/<?= $u->avatar ?>" class="rounded-circle me-2" width="30" height="30" onerror="this.src='https://ui-avatars.com/api/?name=<?= urlencode($u->name) ?>'">
-                                    <?= htmlspecialchars($u->name) ?>
-                                    <?php if($u->status == 'online') echo '<span class="badge bg-success">Online</span>'; ?>
-                                </td>
-                                <td><?= htmlspecialchars($u->document_number) ?></td>
-                                <td><span class="badge bg-secondary"><?= $u->role ?></span></td>
-                                <td><small class="text-muted"><?= $u->last_seen ? date('d/m/Y H:i', strtotime($u->last_seen)) : 'Nunca' ?></small></td>
-                                <td>
-                                    <form method="POST" class="d-inline" onsubmit="return confirm('¿Reiniciar contraseña al documento?');">
-                                        <input type="hidden" name="action" value="reset_pass">
-                                        <input type="hidden" name="user_id" value="<?= $u->id ?>">
-                                        <input type="hidden" name="user_doc" value="<?= htmlspecialchars($u->document_number) ?>">
-                                        <button type="submit" class="btn btn-sm btn-warning" title="Reiniciar Contraseña"><i class="bi bi-key"></i></button>
-                                    </form>
-                                </td>
-                            </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
+            <!-- Usuarios -->
+            <div class="col-md-8 mb-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header border-bottom d-flex justify-content-between align-items-center">
+                        <h5 class="m-0"><i class="bi bi-people me-2"></i> Gestión de Usuarios</h5>
+                        <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#modalCreateUser"><i class="bi bi-plus-lg"></i> Nuevo Usuario</button>
+                    </div>
+                    <div class="card-body overflow-auto" style="max-height: 600px;">
+                        <?php if(isset($msg_user)) echo "<div class='alert alert-success'>$msg_user</div>"; ?>
+                        <?php if(isset($err_user)) echo "<div class='alert alert-danger'>$err_user</div>"; ?>
+                        
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Usuario</th>
+                                        <th>Documento</th>
+                                        <th>Rol</th>
+                                        <th>Última Conexión</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach($users as $u): ?>
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <img src="uploads/avatars/<?= $u->avatar ?>" class="rounded-circle me-2 border border-secondary" width="35" height="35" style="cursor:pointer; object-fit: cover;" onclick="viewImage(this.src, 'avatar', <?= $u->id ?>)" onerror="this.src='https://ui-avatars.com/api/?name=<?= urlencode($u->name) ?>'">
+                                                <div>
+                                                    <div class="fw-bold"><?= htmlspecialchars($u->name) ?></div>
+                                                    <small class="text-muted"><?= htmlspecialchars($u->email) ?></small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td><?= htmlspecialchars($u->document_number) ?></td>
+                                        <td>
+                                            <span class="badge <?= $u->role == 'superadmin' ? 'bg-danger' : 'bg-secondary' ?>"><?= ucfirst($u->role) ?></span>
+                                        </td>
+                                        <td>
+                                            <small class="text-muted d-block"><?= $u->last_seen ? date('d/m/Y H:i', strtotime($u->last_seen)) : 'Nunca' ?></small>
+                                            <?php if($u->status == 'online'): ?>
+                                                <span class="badge bg-success" style="font-size: 0.7em;">Online</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td>
+                                            <form method="POST" class="d-inline" onsubmit="return confirm('¿Reiniciar contraseña al documento?');">
+                                                <input type="hidden" name="action" value="reset_pass">
+                                                <input type="hidden" name="user_id" value="<?= $u->id ?>">
+                                                <input type="hidden" name="user_doc" value="<?= htmlspecialchars($u->document_number) ?>">
+                                                <button type="submit" class="btn btn-sm btn-outline-warning" title="Reiniciar Contraseña"><i class="bi bi-key"></i></button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -165,20 +279,20 @@ $users = $pdo->query("SELECT * FROM users ORDER BY name ASC")->fetchAll();
           </div>
           <div class="modal-body">
             <div class="mb-3">
-                <label>Nombre Completo</label>
+                <label class="form-label text-muted">Nombre Completo</label>
                 <input type="text" name="name" class="form-control" required>
             </div>
             <div class="mb-3">
-                <label>N° Documento (Será su contraseña inicial)</label>
+                <label class="form-label text-muted">N° Documento (Será su contraseña inicial)</label>
                 <input type="text" name="document_number" class="form-control" required>
             </div>
             <div class="mb-3">
-                <label>Email</label>
+                <label class="form-label text-muted">Email</label>
                 <input type="email" name="email" class="form-control" required>
             </div>
           </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <div class="modal-footer" style="background-color: var(--wa-bg-color);">
+            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
             <button type="submit" class="btn btn-primary">Crear</button>
           </div>
       </form>
@@ -187,5 +301,54 @@ $users = $pdo->query("SELECT * FROM users ORDER BY name ASC")->fetchAll();
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.12/dist/sweetalert2.all.min.js"></script>
+<script>
+    document.getElementById('sidebarToggle').addEventListener('click', function() {
+        document.querySelector('.admin-sidebar').classList.toggle('sidebar-open');
+    });
+
+    function viewImage(src, type, id = null) {
+        if(src.includes('ui-avatars.com') || src.includes('default.png')) {
+            Swal.fire({
+                imageUrl: src,
+                imageAlt: 'Imagen',
+                confirmButtonColor: '#3085d6',
+                confirmButtonText: 'Cerrar',
+                customClass: { image: 'img-fluid rounded' }
+            });
+            return;
+        }
+
+        Swal.fire({
+            imageUrl: src,
+            imageAlt: 'Imagen',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: '<i class="bi bi-trash"></i> Eliminar Foto',
+            cancelButtonText: 'Cerrar',
+            customClass: { image: 'img-fluid rounded' }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const formData = new FormData();
+                formData.append('type', type);
+                if(id) formData.append('user_id', id);
+
+                fetch('api/delete_image.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if(data.success) {
+                        location.reload();
+                    } else {
+                        Swal.fire('Error', data.message, 'error');
+                    }
+                });
+            }
+        });
+    }
+</script>
 </body>
 </html>

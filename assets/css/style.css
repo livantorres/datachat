@@ -1,14 +1,15 @@
 :root {
-    /* Light Mode (WhatsApp Web Default) */
-    --wa-bg-color: #d1d7db;
+    /* Light Mode */
+    --wa-body-bg: linear-gradient(135deg, #009640 0%, #1a73e8 100%); /* Green to Blue */
+    --wa-bg-color: #f0f2f5; /* For headers and inputs */
     --wa-panel-color: #ffffff;
     --wa-border-color: #e9edef;
     --wa-hover-color: #f5f6f6;
     --wa-text-main: #111b21;
     --wa-text-muted: #667781;
-    --wa-primary: #00a884;
+    --wa-primary: #009640; /* Updated to match logo green */
     --wa-message-in: #ffffff;
-    --wa-message-out: #d9fdd3;
+    --wa-message-out: #dcf8c6;
     --wa-header-height: 60px;
     --wa-search-bg: #f0f2f5;
     --wa-chat-bg-img: url('https://static.whatsapp.net/rsrc.php/v3/yO/r/Fxs_AYzEtsm.png');
@@ -17,6 +18,7 @@
 
 [data-theme="dark"] {
     /* Dark Mode */
+    --wa-body-bg: linear-gradient(135deg, #072a15 0%, #0c2040 100%); /* Very dark green to blue */
     --wa-bg-color: #111b21;
     --wa-panel-color: #202c33;
     --wa-border-color: #222d34;
@@ -31,9 +33,17 @@
     --wa-chat-bg-color: #0b141a;
 }
 
+/* Enhancing shadows for dark mode */
+[data-theme="dark"] .shadow-sm {
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6) !important;
+}
+[data-theme="dark"] .card {
+    border-color: #2a3942 !important;
+}
+
 body {
     overflow: hidden;
-    background-color: var(--wa-bg-color);
+    background: var(--wa-body-bg);
     color: var(--wa-text-main);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
@@ -69,9 +79,12 @@ body {
     color: var(--wa-text-main);
 }
 .card-header, .modal-header {
-    background-color: var(--wa-bg-color) !important;
+    background: linear-gradient(90deg, #118a66 0%, #1369a8 100%) !important;
     border-bottom: 1px solid var(--wa-border-color);
-    color: var(--wa-text-main) !important;
+    color: #ffffff !important;
+}
+.modal-header .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
 }
 .list-group-item {
     background-color: transparent;
@@ -81,9 +94,26 @@ body {
 .list-group-item:hover { background-color: var(--wa-hover-color); color: var(--wa-text-main); }
 
 /* Tables */
-.table { color: var(--wa-text-main); }
-.table th, .table td { border-color: var(--wa-border-color); background-color: var(--wa-panel-color); }
-.table-hover tbody tr:hover td { background-color: var(--wa-hover-color); }
+.table {
+    --bs-table-bg: transparent;
+    --bs-table-color: var(--wa-text-main);
+    --bs-table-border-color: var(--wa-border-color);
+    --bs-table-hover-bg: var(--wa-hover-color);
+    --bs-table-hover-color: var(--wa-text-main);
+    color: var(--wa-text-main) !important;
+    border-color: var(--wa-border-color) !important;
+}
+.table th, .table td {
+    background-color: transparent !important;
+    border-color: var(--wa-border-color) !important;
+    color: var(--wa-text-main) !important;
+}
+.table thead th {
+    background-color: var(--wa-bg-color) !important;
+}
+.table-hover tbody tr:hover td, .table-hover tbody tr:hover th {
+    background-color: var(--wa-hover-color) !important;
+}
 
 /* Buttons */
 .btn-light {
@@ -96,14 +126,14 @@ body {
     color: var(--wa-text-main);
 }
 .btn-primary {
-    background-color: var(--wa-primary);
+    background-color: #1a73e8; /* Blue from the logo */
     border: none;
     color: #fff;
     font-weight: 500;
 }
-[data-theme="dark"] .btn-primary { color: #111b21; }
-.btn-primary:hover { background-color: #06cf9c; color: #fff; }
-[data-theme="dark"] .btn-primary:hover { color: #111b21; }
+[data-theme="dark"] .btn-primary { color: #fff; }
+.btn-primary:hover { background-color: #1557b0; color: #fff; }
+[data-theme="dark"] .btn-primary:hover { color: #fff; }
 
 /* Avatars */
 .avatar-sm { width: 40px; height: 40px; object-fit: cover; border-radius: 50%; }
