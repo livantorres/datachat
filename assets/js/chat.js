@@ -111,8 +111,6 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 document.getElementById('fileInput').value = '';
             }
-        });
-    });
     });
 });
 
@@ -374,5 +372,7 @@ async function deleteMessage(id) {
         }
     }
 }
+
+
 
 
