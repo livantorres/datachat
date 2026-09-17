@@ -184,6 +184,11 @@ $current_user = $stmt->fetch();
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.12/dist/sweetalert2.all.min.js"></script>
 <script>
+    <?php
+    $app_path = str_replace(str_replace('\\', '/', $_SERVER['DOCUMENT_ROOT']), '', str_replace('\\', '/', dirname(__DIR__)));
+    $base_url = rtrim($app_path, '/') . '/';
+    ?>
+    const BASE_URL = "<?= $base_url ?>";
     const CURRENT_USER_ID = <?= $user_id ?>; 
     const APP_NAME = "<?= htmlspecialchars($inst_data->app_name) ?>";
     const OPEN_CHAT_USER = <?= isset($_GET['chat_user']) ? intval($_GET['chat_user']) : 'null' ?>;

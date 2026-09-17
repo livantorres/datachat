@@ -6,7 +6,7 @@ function initSSE() {
         eventSource.close();
     }
 
-    eventSource = new EventSource(`api/stream.php?last_msg=${lastMessageId}`);
+    eventSource = new EventSource(`${BASE_URL}api/stream.php?last_msg=${lastMessageId}`);
 
     eventSource.onmessage = function(event) {
         const data = JSON.parse(event.data);

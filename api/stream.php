@@ -16,6 +16,10 @@ if (!isset($_SESSION['user_id'])) {
 
 $user_id = $_SESSION['user_id'];
 $last_message_id = isset($_GET['last_msg']) ? (int)$_GET['last_msg'] : 0;
+// Si el navegador se reconecta automáticamente, envía el último ID recibido
+if (isset($_SERVER['HTTP_LAST_EVENT_ID'])) {
+    $last_message_id = max($last_message_id, (int)$_SERVER['HTTP_LAST_EVENT_ID']);
+}
 // We also track when users last came online to notify about status changes.
 $last_check_time = date('Y-m-d H:i:s');
 
@@ -96,6 +100,9 @@ while (true) {
 
     // Send events if any
     foreach ($events as $event) {
+        if ($event['type'] === 'new_message') {
+            echo "id: " . $event['data']->id . "\n";
+        }
         echo "data: " . json_encode($event) . "\n\n";
     }
 

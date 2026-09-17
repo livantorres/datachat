@@ -1,7 +1,8 @@
 // Utility functions
 const fetchAPI = async (url, options = {}) => {
     try {
-        const response = await fetch(url, options);
+        const fullUrl = (typeof BASE_URL !== 'undefined' ? BASE_URL : '') + url;
+        const response = await fetch(fullUrl, options);
         if (!response.ok) throw new Error('Error en red');
         return await response.json();
     } catch (error) {
