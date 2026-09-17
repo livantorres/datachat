@@ -125,7 +125,7 @@ $current_user = $stmt->fetch();
                         <li><a class="dropdown-item py-2" href="#" id="attachDocument"><i class="bi bi-file-earmark-text text-primary me-3 fs-5"></i> Documento</a></li>
                         <li><a class="dropdown-item py-2" href="#" id="attachImage"><i class="bi bi-image text-primary me-3 fs-5"></i> Fotos y videos</a></li>
                     </ul>
-                    <input type="file" id="fileInput" name="file" class="d-none">
+                    <input type="file" id="fileInput" name="file[]" class="d-none" multiple>
                 </div>
                 
                 <div class="flex-grow-1 rounded-3 mx-2 d-flex align-items-center px-3 shadow-sm" style="background-color: #ffffff !important;">

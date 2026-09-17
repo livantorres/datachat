@@ -42,11 +42,12 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('formSendMessage').addEventListener('submit', async (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
-        if (!formData.get('message').trim() && !formData.get('file').name) return;
+        const hasFiles = document.getElementById('fileInput').files.length > 0;
+        if (!formData.get('message').trim() && !hasFiles) return;
 
         // Optimistic UI for text
         const textMsg = formData.get('message');
-        if(textMsg && !formData.get('file').name) {
+        if(textMsg && !hasFiles) {
              renderMessage({
                 sender_id: CURRENT_USER_ID,
                 message: textMsg,
@@ -87,16 +88,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Previsualizar al seleccionar archivo
     document.getElementById('fileInput').addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
+        const files = e.target.files;
+        if (files.length === 0) return;
 
-        let previewHtml = '';
-        if (file.type.startsWith('image/')) {
-            const url = URL.createObjectURL(file);
-            previewHtml = '<img src="' + url + '" class="img-fluid rounded mb-3" style="max-height: 250px; object-fit: contain;">';
-        } else {
-            previewHtml = '<div class="p-4 bg-light rounded mb-3 text-center"><i class="bi bi-file-earmark-check fs-1 text-primary"></i><br><b class="text-break">' + file.name + '</b></div>';
+        let previewHtml = '<div class="d-flex flex-wrap justify-content-center gap-2">';
+        for (let i = 0; i < files.length; i++) {
+            let file = files[i];
+            if (file.type.startsWith('image/')) {
+                const url = URL.createObjectURL(file);
+                previewHtml += '<img src="' + url + '" class="img-thumbnail" style="max-height: 100px; max-width: 100px; object-fit: cover;">';
+            } else {
+                previewHtml += '<div class="p-2 bg-light rounded text-center border" style="width: 100px; height: 100px; overflow: hidden;"><i class="bi bi-file-earmark-check fs-3 text-primary"></i><br><small style="font-size:0.7rem;">' + file.name + '</small></div>';
+            }
         }
+        previewHtml += '</div>';
 
         Swal.fire({
             title: 'Enviar adjunto',
@@ -107,7 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
             reverseButtons: true
         }).then((result) => {
             if (result.isConfirmed) {
-                document.getElementById('messageForm').dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+                document.getElementById('formSendMessage').dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
             } else {
                 document.getElementById('fileInput').value = '';
             }
@@ -373,6 +378,9 @@ async function deleteMessage(id) {
         }
     }
 }
+
+
+
 
 
 
