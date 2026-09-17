@@ -285,7 +285,8 @@ async function startPrivateChat(contactId) {
     });
     
     if (data.success) {
-        bootstrap.Modal.getInstance(document.getElementById('modalNewChat')).hide();
+        const modal = bootstrap.Modal.getInstance(document.getElementById('modalNewChat'));
+        if (modal) modal.hide();
         await loadChats();
         const chat = chatList.find(c => c.id == data.conversation_id);
         if (chat) openChat(chat);
@@ -309,7 +310,8 @@ document.getElementById('formCreateGroup').addEventListener('submit', async (e) 
     });
 
     if (data.success) {
-        bootstrap.Modal.getInstance(document.getElementById('modalNewChat')).hide();
+        const modal = bootstrap.Modal.getInstance(document.getElementById('modalNewChat'));
+        if (modal) modal.hide();
         await loadChats();
         const chat = chatList.find(c => c.id == data.conversation_id);
         if (chat) openChat(chat);
