@@ -12,7 +12,7 @@
     --wa-message-out: #dcf8c6;
     --wa-header-height: 60px;
     --wa-search-bg: #f0f2f5;
-    --wa-chat-bg-img: url('https://static.whatsapp.net/rsrc.php/v3/yO/r/Fxs_AYzEtsm.png');
+    --wa-chat-bg-img: none;
     --wa-chat-bg-color: #efeae2;
 }
 
@@ -29,7 +29,7 @@
     --wa-message-in: #202c33;
     --wa-message-out: #005c4b;
     --wa-search-bg: #202c33;
-    --wa-chat-bg-img: url('https://static.whatsapp.net/rsrc.php/v3/yl/r/gi_DckOUM5a.png');
+    --wa-chat-bg-img: none;
     --wa-chat-bg-color: #0b141a;
 }
 

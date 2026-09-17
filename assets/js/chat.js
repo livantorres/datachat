@@ -87,6 +87,13 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('fileInput').setAttribute('accept', '.pdf,.doc,.docx,.xls,.xlsx,.txt');
         document.getElementById('fileInput').click();
     });
+
+    // Auto-enviar al seleccionar archivo
+    document.getElementById('fileInput').addEventListener('change', () => {
+        if (document.getElementById('fileInput').files.length > 0) {
+            document.getElementById('messageForm').dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+        }
+    });
 });
 
 async function loadChats() {
