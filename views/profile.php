@@ -32,10 +32,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (isset($_FILES['avatar']) && $_FILES['avatar']['error'] === UPLOAD_ERR_OK) {
             $ext = pathinfo($_FILES['avatar']['name'], PATHINFO_EXTENSION);
             $filename = md5($user_id . time()) . '.' . $ext;
-            
-            $upload_dir = 'uploads/avatars/';
+            $upload_dir = __DIR__ . '/../uploads/avatars/';
             if (!is_dir($upload_dir)) {
-                mkdir($upload_dir, 0755, true);
+                mkdir($upload_dir, 0777, true);
             }
             
             if (move_uploaded_file($_FILES['avatar']['tmp_name'], $upload_dir . $filename)) {

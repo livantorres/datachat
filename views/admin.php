@@ -21,10 +21,9 @@ if (isset($_POST['update_inst'])) {
     if (isset($_FILES['logo']) && $_FILES['logo']['error'] === UPLOAD_ERR_OK) {
         $ext = pathinfo($_FILES['logo']['name'], PATHINFO_EXTENSION);
         $filename = 'logo_' . time() . '.' . $ext;
-        
-        $upload_dir = 'uploads/logos/';
+        $upload_dir = __DIR__ . '/../uploads/logos/';
         if (!is_dir($upload_dir)) {
-            mkdir($upload_dir, 0755, true);
+            mkdir($upload_dir, 0777, true);
         }
         
         if (move_uploaded_file($_FILES['logo']['tmp_name'], $upload_dir . $filename)) {
