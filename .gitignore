@@ -1,0 +1,15 @@
+# Directorios de subidas (Archivos de usuarios)
+uploads/attachments/*
+uploads/avatars/*
+uploads/logos/*
+
+# Mantener las carpetas vacías en el repositorio
+!uploads/attachments/.gitkeep
+!uploads/avatars/.gitkeep
+!uploads/logos/.gitkeep
+
+# IDEs y sistemas operativos
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
