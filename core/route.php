@@ -32,6 +32,5 @@ if (array_key_exists($path, $routes)) {
 } else {
     // Página 404
     http_response_code(404);
-    echo "<h1>404 Not Found</h1>";
-    echo "<p>La página solicitada no existe.</p>";
+    require __DIR__ . '/../404.php';
 }
