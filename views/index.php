@@ -216,7 +216,7 @@ if (isset($_SESSION['user_id'])) {
 
                     <div class="d-flex justify-content-center">
                         <div id="g_id_onload"
-                            data-client_id="YOUR_GOOGLE_CLIENT_ID_HERE.apps.googleusercontent.com"
+                            data-client_id="634438355633-6kql982tujt2vpvt6qjub7mjr7icmuem.apps.googleusercontent.com"
                             data-context="signin"
                             data-ux_mode="popup"
                             data-callback="handleCredentialResponse"
