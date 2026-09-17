@@ -28,9 +28,9 @@ $routes = [
 if (array_key_exists($path, $routes)) {
     // Definimos una constante para saber que estamos pasando por el router
     define('ROUTER_LOADED', true);
-    require __DIR__ . '/../' . $routes[$path];
+    require __DIR__ . '/../views/' . $routes[$path];
 } else {
     // Página 404
     http_response_code(404);
-    require __DIR__ . '/../404.php';
+    require __DIR__ . '/../views/404.php';
 }
