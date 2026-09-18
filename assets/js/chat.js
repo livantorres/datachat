@@ -232,6 +232,7 @@ async function loadMessages(chatId) {
     if (data.success) {
         const box = document.getElementById('messagesBox');
         box.innerHTML = '';
+        currentDisplayedDate = null;
         document.getElementById('chatLoading')?.classList.remove('d-flex');
         document.getElementById('chatLoading')?.classList.add('d-none');
         box.classList.remove('d-none');
@@ -259,7 +260,30 @@ async function loadMessages(chatId) {
     }
 }
 
+let currentDisplayedDate = null;
+
 function renderMessage(msg, container = document.getElementById('messagesBox')) {
+    const msgDateObj = new Date(msg.created_at);
+    const msgDateStr = msgDateObj.toDateString();
+
+    if (msgDateStr !== currentDisplayedDate) {
+        const sep = document.createElement('div');
+        sep.className = 'd-flex justify-content-center my-3 date-separator-wrapper w-100';
+        
+        let dateText = '';
+        const today = new Date();
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        
+        if (msgDateStr === today.toDateString()) dateText = 'Hoy';
+        else if (msgDateStr === yesterday.toDateString()) dateText = 'Ayer';
+        else dateText = msgDateObj.toLocaleDateString([], { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+        sep.innerHTML = '<span class="badge text-dark shadow-sm date-separator" style="background-color: #f0f2f5; font-weight: normal; padding: 6px 12px; font-size: 0.75rem; text-transform: capitalize;">' + dateText + '</span>';
+        container.appendChild(sep);
+        currentDisplayedDate = msgDateStr;
+    }
+
     const isMe = msg.sender_id == CURRENT_USER_ID;
     const div = document.createElement('div');
     div.id = msg.id ? `msg-${msg.id}` : `msg-tmp-${Date.now()}`;
@@ -496,4 +520,8 @@ function filterMessages(query) {
         }
     });
 }
+
+
+
+
 
