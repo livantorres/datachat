@@ -110,7 +110,7 @@ $current_user = $stmt->fetch();
         <!-- Messages Box -->
         <div id="messageSearchBar" class="d-none bg-white p-2 border-bottom flex-shrink-0">
             <div class="input-group input-group-sm">
-                <input type="text" id="inputSearchMessages" class="form-control" placeholder="Buscar en la conversación...">
+                <input type="text" id="inputSearchMessages" class="form-control" placeholder="Buscar en la conversaciÃ³n...">
                 <button class="btn btn-outline-secondary" id="btnCloseSearch"><i class="bi bi-x-lg"></i></button>
             </div>
         </div>
