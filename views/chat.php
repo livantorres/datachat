@@ -92,7 +92,7 @@ $current_user = $stmt->fetch();
         </div>
 
         <!-- Active Chat Header -->
-        <div id="chatHeader" class="d-none align-items-center justify-content-between">
+        <div id="chatHeader" class="d-none align-items-center justify-content-between flex-shrink-0">
             <div class="d-flex align-items-center">
                 <button class="btn btn-light d-md-none me-2 p-1" id="btnBack"><i class="bi bi-arrow-left fs-4"></i></button>
                 <img src="uploads/avatars/default.png" alt="" class="avatar-sm me-3" id="activeChatAvatar">
@@ -108,12 +108,15 @@ $current_user = $stmt->fetch();
         </div>
 
         <!-- Messages Box -->
+        <div id="chatLoading" class="d-none justify-content-center align-items-center flex-grow-1">
+            <div class="spinner-border text-success" role="status" style="width: 3rem; height: 3rem;"><span class="visually-hidden">Cargando...</span></div>
+        </div>
         <div id="messagesBox" class="flex-grow-1 overflow-auto d-none">
             <!-- Messages injected here -->
         </div>
 
         <!-- Input Area -->
-        <div id="inputArea" class="d-none align-items-center">
+        <div id="inputArea" class="d-none align-items-center flex-shrink-0">
             <form id="formSendMessage" class="d-flex align-items-center w-100 m-0">
                 <input type="hidden" id="activeConversationId" name="conversation_id">
                 
@@ -198,3 +201,7 @@ $current_user = $stmt->fetch();
 <script src="assets/js/sse.js"></script>
 </body>
 </html>
+
+
+
+

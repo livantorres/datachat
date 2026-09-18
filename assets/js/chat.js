@@ -185,8 +185,10 @@ async function openChat(chat) {
     document.getElementById('chatBlankState').classList.add('d-none');
     document.getElementById('chatHeader').classList.remove('d-none');
     document.getElementById('chatHeader').classList.add('d-flex');
-    document.getElementById('messagesBox').classList.remove('d-none');
-    document.getElementById('messagesBox').classList.add('d-flex');
+    document.getElementById('messagesBox').classList.add('d-none');
+    document.getElementById('chatLoading').classList.remove('d-none');
+    document.getElementById('chatLoading').classList.add('d-flex');
+    
     document.getElementById('inputArea').classList.remove('d-none');
     document.getElementById('inputArea').classList.add('d-flex');
     
@@ -226,6 +228,10 @@ async function loadMessages(chatId) {
     if (data.success) {
         const box = document.getElementById('messagesBox');
         box.innerHTML = '';
+        document.getElementById('chatLoading')?.classList.remove('d-flex');
+        document.getElementById('chatLoading')?.classList.add('d-none');
+        box.classList.remove('d-none');
+        box.classList.add('d-flex');
         data.data.forEach(msg => renderMessage(msg, box));
         scrollToBottom();
     }
@@ -411,4 +417,6 @@ function openImageModal(url, msgId, isMe) {
         }
     });
 }
+
+
 

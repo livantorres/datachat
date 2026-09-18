@@ -118,8 +118,7 @@ if (isset($_SESSION['user_id'])) {
     .login-right {
         background-color: var(--wa-panel-color);
         display: flex;
-        align-items: center;
-        justify-content: center;
+        overflow-y: auto;
         padding: 3rem;
         position: relative;
         z-index: 2;
@@ -129,6 +128,7 @@ if (isset($_SESSION['user_id'])) {
         box-shadow: -10px 0 30px rgba(0, 0, 0, 0.6);
     }
     .login-form-box {
+        margin: auto;
         width: 100%;
         max-width: 400px;
     }
@@ -360,3 +360,4 @@ function handleCredentialResponse(response) {
 </script>
 </body>
 </html>
+
