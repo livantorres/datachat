@@ -140,9 +140,7 @@ if (isset($_SESSION['user_id'])) {
         background: var(--wa-border-color);
     }
     .site-footer {
-        position: absolute;
-        bottom: 0;
-        width: 100%;
+        
         background-color: var(--wa-bg-color);
         border-top: 1px solid var(--wa-border-color);
         color: var(--wa-text-muted);
@@ -360,4 +358,5 @@ function handleCredentialResponse(response) {
 </script>
 </body>
 </html>
+
 
