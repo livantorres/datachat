@@ -29,7 +29,7 @@ $current_user = $stmt->fetch();
 </head>
 <body class="d-flex vh-100 p-0 m-0 overflow-hidden">
 
-<div class="container-fluid p-0 d-flex w-100 h-100">
+<div class="container-fluid p-0 d-flex position-fixed top-0 start-0 w-100 h-100">
     
     <!-- Sidebar -->
     <div class="sidebar d-flex flex-column col-12 col-md-4 col-lg-3 border-end p-0 m-0" id="sidebar">
@@ -201,6 +201,7 @@ $current_user = $stmt->fetch();
 <script src="assets/js/sse.js"></script>
 </body>
 </html>
+
 
 
 

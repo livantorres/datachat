@@ -32,7 +32,9 @@ function updateMyStatus($pdo, $uid) {
 
 $loop_counter = 0;
 
-while (true) {
+$iterations = 0;
+while ($iterations < 15) {
+    $iterations++;
     if (connection_aborted()) {
         break;
     }
@@ -140,3 +142,5 @@ while (true) {
     sleep(2); // Wait 2 seconds before checking again
 }
 ?>
+
+
