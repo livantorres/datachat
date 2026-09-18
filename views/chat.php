@@ -102,12 +102,18 @@ $current_user = $stmt->fetch();
                 </div>
             </div>
             <div class="d-flex">
-                <button class="btn btn-light rounded-circle p-2 ms-2"><i class="bi bi-search fs-5"></i></button>
+                <button id="btnSearchMessages" class="btn btn-light rounded-circle p-2 ms-2"><i class="bi bi-search fs-5"></i></button>
                 <button class="btn btn-light rounded-circle p-2 ms-2"><i class="bi bi-three-dots-vertical fs-5"></i></button>
             </div>
         </div>
 
         <!-- Messages Box -->
+        <div id="messageSearchBar" class="d-none bg-white p-2 border-bottom flex-shrink-0">
+            <div class="input-group input-group-sm">
+                <input type="text" id="inputSearchMessages" class="form-control" placeholder="Buscar en la conversación...">
+                <button class="btn btn-outline-secondary" id="btnCloseSearch"><i class="bi bi-x-lg"></i></button>
+            </div>
+        </div>
         <div id="chatLoading" class="d-none justify-content-center align-items-center flex-grow-1">
             <div class="spinner-border text-success" role="status" style="width: 3rem; height: 3rem;"><span class="visually-hidden">Cargando...</span></div>
         </div>
@@ -197,10 +203,15 @@ $current_user = $stmt->fetch();
     const OPEN_CHAT_USER = <?= isset($_GET['chat_user']) ? intval($_GET['chat_user']) : 'null' ?>;
 </script>
 <script src="assets/js/app.js"></script>
-<script src="assets/js/chat.js"></script>
-<script src="assets/js/sse.js"></script>
+<script src="assets/js/chat.js?v=<?= time() ?>"></script>
+<script src="assets/js/sse.js?v=<?= time() ?>"></script>
 </body>
 </html>
+
+
+
+
+
 
 
 

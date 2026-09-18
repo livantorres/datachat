@@ -180,6 +180,9 @@ function renderChatList() {
 
 async function openChat(chat) {
     activeConversationId = chat.id;
+    document.getElementById('messageSearchBar')?.classList.add('d-none');
+    if(document.getElementById('inputSearchMessages')) document.getElementById('inputSearchMessages').value = '';
+    if(typeof filterMessages === 'function') filterMessages('');
     document.getElementById('activeConversationId').value = chat.id;
     
     // UI Updates
@@ -444,4 +447,53 @@ function openImageModal(url, msgId, isMe) {
 
 
 
+
+
+document.addEventListener('DOMContentLoaded', () => {
+    const btnSearchMessages = document.getElementById('btnSearchMessages');
+    const messageSearchBar = document.getElementById('messageSearchBar');
+    const inputSearchMessages = document.getElementById('inputSearchMessages');
+    const btnCloseSearch = document.getElementById('btnCloseSearch');
+
+    if (btnSearchMessages) {
+        btnSearchMessages.addEventListener('click', () => {
+            messageSearchBar.classList.toggle('d-none');
+            if (!messageSearchBar.classList.contains('d-none')) {
+                inputSearchMessages.focus();
+            } else {
+                inputSearchMessages.value = '';
+                filterMessages('');
+            }
+        });
+    }
+
+    if (btnCloseSearch) {
+        btnCloseSearch.addEventListener('click', () => {
+            messageSearchBar.classList.add('d-none');
+            inputSearchMessages.value = '';
+            filterMessages('');
+        });
+    }
+
+    if (inputSearchMessages) {
+        inputSearchMessages.addEventListener('input', (e) => {
+            filterMessages(e.target.value.toLowerCase());
+        });
+    }
+});
+
+function filterMessages(query) {
+    const bubbles = document.querySelectorAll('#messagesBox .message-bubble');
+    bubbles.forEach(bubble => {
+        if (!query) {
+            bubble.style.display = '';
+            return;
+        }
+        if (bubble.innerText.toLowerCase().includes(query)) {
+            bubble.style.display = '';
+        } else {
+            bubble.style.display = 'none';
+        }
+    });
+}
 
