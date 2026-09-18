@@ -232,7 +232,9 @@ async function loadMessages(chatId) {
         document.getElementById('chatLoading')?.classList.add('d-none');
         box.classList.remove('d-none');
         box.classList.add('d-flex');
-        data.data.forEach(msg => renderMessage(msg, box));
+        const frag = document.createDocumentFragment();
+        data.data.forEach(msg => renderMessage(msg, frag));
+        box.appendChild(frag);
         scrollToBottom();
     }
 }
@@ -417,6 +419,7 @@ function openImageModal(url, msgId, isMe) {
         }
     });
 }
+
 
 
 

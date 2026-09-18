@@ -19,11 +19,15 @@ if (!$check->fetch()) {
 }
 
 $stmt = $pdo->prepare("
-    SELECT m.*, u.name as sender_name 
-    FROM messages m 
-    JOIN users u ON m.sender_id = u.id 
-    WHERE m.conversation_id = ? 
-    ORDER BY m.id ASC
+    SELECT * FROM (
+        SELECT m.*, u.name as sender_name 
+        FROM messages m 
+        JOIN users u ON m.sender_id = u.id 
+        WHERE m.conversation_id = ? 
+        ORDER BY m.id DESC
+        LIMIT 200
+    ) sub
+    ORDER BY id ASC
 ");
 $stmt->execute([$conversation_id]);
 $messages = $stmt->fetchAll();
