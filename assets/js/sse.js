@@ -3,7 +3,7 @@ let pollInterval = null;
 
 async function fetchPoll() {
     try {
-        const response = await fetch(`${BASE_URL}api/poll.php?last_msg=${lastMessageId}`);
+        const response = await fetch(`${BASE_URL}api/poll.php?last_msg=${lastMessageId}&_t=${Date.now()}`, { cache: 'no-store' });
         if (!response.ok) return;
         
         const data = await response.json();
@@ -155,3 +155,5 @@ document.addEventListener('DOMContentLoaded', () => {
     
     initSSE();
 });
+
+

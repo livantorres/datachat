@@ -70,6 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('fileInput').value = '';
             document.getElementById('messageInput').value = '';
             loadMessages(activeConversationId);
+            loadChats();
         }
         
     });
@@ -205,16 +206,16 @@ async function openChat(chat) {
         document.getElementById('chatArea').classList.add('d-flex');
     }
 
-    // Mark as read
+    renderChatList(); // Update active class
+    // Cargar mensajes
+    await loadMessages(chat.id);
+
+    // Mark as read after loading so we can see which were unread
     fetchAPI('api/mark_read.php', {
         method: 'POST',
         body: JSON.stringify({ conversation_id: chat.id }),
         headers: { 'Content-Type': 'application/json' }
     });
-
-    renderChatList(); // Update active class
-    // Cargar mensajes
-    await loadMessages(chat.id);
     
     // Enfocar automáticamente el input del chat
     const msgInput = document.getElementById('messageInput');
@@ -233,9 +234,25 @@ async function loadMessages(chatId) {
         box.classList.remove('d-none');
         box.classList.add('d-flex');
         const frag = document.createDocumentFragment();
-        data.data.forEach(msg => renderMessage(msg, frag));
+        let firstUnreadId = null;
+        data.data.forEach(msg => {
+            if (msg.is_read == 0 && msg.sender_id != CURRENT_USER_ID && !firstUnreadId) {
+                firstUnreadId = msg.id;
+            }
+            renderMessage(msg, frag);
+        });
         box.appendChild(frag);
-        scrollToBottom();
+
+        if (firstUnreadId) {
+            const unreadEl = document.getElementById('msg-' + firstUnreadId);
+            if (unreadEl) {
+                unreadEl.scrollIntoView({ behavior: 'auto', block: 'center' });
+            } else {
+                scrollToBottom();
+            }
+        } else {
+            scrollToBottom();
+        }
     }
 }
 
@@ -419,6 +436,11 @@ function openImageModal(url, msgId, isMe) {
         }
     });
 }
+
+
+
+
+
 
 
 
