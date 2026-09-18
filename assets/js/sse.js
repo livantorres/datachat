@@ -1,30 +1,42 @@
 let lastMessageId = 0;
-let eventSource = null;
+let pollInterval = null;
+
+async function fetchPoll() {
+    try {
+        const response = await fetch(`${BASE_URL}api/poll.php?last_msg=${lastMessageId}`);
+        if (!response.ok) return;
+        
+        const data = await response.json();
+        
+        if (data.error === 'auth_error') {
+            window.location.reload();
+            return;
+        }
+
+        lastMessageId = data.last_msg;
+
+        data.events.forEach(event => {
+            if (event.type === 'new_message') {
+                handleNewMessage(event.data);
+            } else if (event.type === 'read_receipts') {
+                handleReadReceipts(event.data);
+            } else if (event.type === 'online_status') {
+                updateOnlineStatus(event.data);
+            }
+        });
+    } catch (e) {
+        // Silently fail and retry next interval
+    }
+}
 
 function initSSE() {
-    if (eventSource) {
-        eventSource.close();
+    if (pollInterval) {
+        clearInterval(pollInterval);
     }
-
-    eventSource = new EventSource(`${BASE_URL}api/stream.php?last_msg=${lastMessageId}`);
-
-    eventSource.onmessage = function(event) {
-        const data = JSON.parse(event.data);
-        
-        if (data.type === 'new_message') {
-            handleNewMessage(data.data);
-        } else if (data.type === 'read_receipts') {
-            handleReadReceipts(data.data);
-        } else if (data.type === 'online_status') {
-            updateOnlineStatus(data.data);
-        } else if (data.type === 'auth_error') {
-            window.location.reload();
-        }
-    };
-
-    eventSource.onerror = function(err) {
-        // SSE auto-reconnects, no need to clutter console
-    };
+    // Fetch immediately
+    fetchPoll();
+    // Then poll every 3 seconds
+    pollInterval = setInterval(fetchPoll, 3000);
 }
 
 let knownReadMax = {};
@@ -45,7 +57,7 @@ function updateOnlineStatus(onlineUsers) {
         if (changed) renderChatList();
         
         // Update active chat header if open
-        if (activeConversationId) {
+        if (typeof activeConversationId !== 'undefined' && activeConversationId) {
             const activeChat = chatList.find(c => c.id == activeConversationId);
             if (activeChat && activeChat.type === 'private') {
                 document.getElementById('activeChatStatus').textContent = activeChat.is_online ? 'Online' : 'Offline';
@@ -63,41 +75,47 @@ function handleReadReceipts(receipts) {
         }
     });
 
-    if (changed && activeConversationId) {
+    if (changed && typeof activeConversationId !== 'undefined' && activeConversationId) {
         // Just reload messages if a read receipt arrived for the active chat
         // To be simpler than searching DOM elements
-        loadMessages(activeConversationId);
+        if (typeof loadMessages === 'function') {
+            loadMessages(activeConversationId);
+        }
     }
 }
 
 function handleNewMessage(msg) {
-    lastMessageId = Math.max(lastMessageId, msg.id);
-
     // Play sound ALWAYS
     playNotificationSound();
     
     // Show Push/Toast
     showPushNotification(msg);
 
-    if (activeConversationId == msg.conversation_id) {
-        renderMessage(msg);
-        scrollToBottom();
-        // Mark as read immediately since we are in the chat
-        fetchAPI('api/mark_read.php', {
-            method: 'POST',
-            body: JSON.stringify({ conversation_id: msg.conversation_id }),
-            headers: { 'Content-Type': 'application/json' }
-        });
+    if (typeof activeConversationId !== 'undefined' && activeConversationId == msg.conversation_id) {
+        if (typeof renderMessage === 'function') {
+            renderMessage(msg);
+            scrollToBottom();
+            // Mark as read immediately since we are in the chat
+            fetchAPI('api/mark_read.php', {
+                method: 'POST',
+                body: JSON.stringify({ conversation_id: msg.conversation_id }),
+                headers: { 'Content-Type': 'application/json' }
+            });
+        }
     }
     
     // Always refresh chat list to update unread badge / last message
-    loadChats();
+    if (typeof loadChats === 'function') {
+        loadChats();
+    }
 }
 
 function playNotificationSound() {
     const audio = document.getElementById('notificationSound');
-    audio.currentTime = 0;
-    audio.play().catch(e => console.log('Audio autoplay prevented'));
+    if (audio) {
+        audio.currentTime = 0;
+        audio.play().catch(e => console.log('Audio autoplay prevented'));
+    }
 }
 
 function showPushNotification(msg) {
@@ -105,19 +123,21 @@ function showPushNotification(msg) {
     const body = msg.message || 'Archivo adjunto recibido';
     
     // In-app Toast using SweetAlert2
-    Swal.fire({
-        toast: true,
-        position: 'top-end',
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true,
-        title: title,
-        text: body,
-        icon: 'info'
-    });
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            title: title,
+            text: body,
+            icon: 'info'
+        });
+    }
 
     // OS Push Notification
-    if (Notification.permission === 'granted') {
+    if ("Notification" in window && Notification.permission === 'granted') {
         new Notification(title, {
             body: body,
             icon: 'uploads/logos/default.png'
@@ -133,6 +153,5 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    // First we get max id via API if needed, but the PHP stream handles last_msg=0 to just set max id.
     initSSE();
 });
